@@ -1,6 +1,6 @@
 # docker-gwan
 
-This project contains the complete installation for the current version of [G-WAN](http://gwan.ch).
+This project contains the complete installation for the latest version of [G-WAN](http://gwan.ch).
 
 > G-WAN 7.12.6 64-bit (Feb  8 2016 16:33:28)
 
