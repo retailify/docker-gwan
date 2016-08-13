@@ -8,4 +8,4 @@ This project contains the complete installation for the current version of gwan.
 > docker build -t gwan .
 
 #### Run
-> docker run --rm -p 6070:80 -v /my/path/to/static/www:"/opt/gwan/0.0.0.0\:80/\#0.0.0.0/www" gwan
+> docker run --rm -p 6070:80 -v /my/path/to/static/www:"/opt/gwan/0.0.0.0:80/#0.0.0.0/www" gwan
