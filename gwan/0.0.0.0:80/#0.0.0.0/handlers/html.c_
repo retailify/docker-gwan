@@ -1,0 +1,20 @@
+// ============================================================================
+// "Content-Type" Handler sample for the G-WAN Web Server http://trustleap.ch/
+// ----------------------------------------------------------------------------
+// html.c: just to test that it works
+// ============================================================================
+#include "gwan.h" // G-WAN exported functions
+
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+   char *req = (char*)get_env(argv, REQUEST); // query: "start=200000"
+   
+   printf("req: %s\n", req);
+
+   return 200;
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================

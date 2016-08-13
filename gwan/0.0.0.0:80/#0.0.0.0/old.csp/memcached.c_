@@ -1,0 +1,85 @@
+// ============================================================================
+// C servlet example for the G-WAN Web Application Server (http://gwan.com/)
+// ----------------------------------------------------------------------------
+// memcached.c: demonstrates how to use the memcached library from G-WAN
+// ============================================================================
+// sudo apt-get install libmemcached-tools libmemcached-dev
+// ----------------------------------------------------------------------------
+#pragma link "memcached"
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <libmemcached/memcached.h>
+
+#include "gwan.h"
+
+int main(int argc, char *argv[])
+{
+  xbuf_t *reply = get_reply(argv);
+
+  // --------------------------------------------------------------------------
+  // add a server
+  // --------------------------------------------------------------------------
+  memcached_st *memc = memcached_create(NULL);
+  memcached_return rc;
+  memcached_server_st *servers = 0;
+  servers = memcached_server_list_append(servers, "localhost", 11211, &rc);
+     
+  rc = memcached_server_push(memc, servers);
+  if(rc == MEMCACHED_SUCCESS)
+    xbuf_xcat(reply, "Added server successfully<br>\n");
+  else
+    xbuf_xcat(reply, "Couldn't add server: %s<br>\n", 
+              memcached_strerror(memc, rc));
+
+  // --------------------------------------------------------------------------
+  // store values
+  // --------------------------------------------------------------------------
+  const char *keys[]= {"huey", "dewey", "louie"};
+  size_t key_length[3];
+  char *values[]= {"red", "blue", "green"};
+  size_t value_length[3];
+  u32 x = 0, flags;  
+  for(; x < 3; x++)
+  {
+      key_length[x] = strlen(keys[x]);
+      value_length[x] = strlen(values[x]);
+
+      rc = memcached_set(memc, keys[x], key_length[x], values[x],
+                         value_length[x], (time_t)0, (u32)0);
+                         
+     if(rc == MEMCACHED_SUCCESS)
+       xbuf_xcat(reply, "Key stored successfully<br>\n");
+     else
+       xbuf_xcat(reply, "Couldn't store key: %s<br>\n",
+                 memcached_strerror(memc, rc));
+    }
+
+  // --------------------------------------------------------------------------
+  // fetch values
+  // --------------------------------------------------------------------------
+  char return_key[MEMCACHED_MAX_KEY];
+  size_t return_key_length;
+  char  *return_value;
+  size_t return_value_length;
+  rc = memcached_mget(memc, keys, key_length, 3);
+  if(rc == MEMCACHED_SUCCESS)
+  {
+      while((return_value = memcached_fetch(memc, return_key, 
+                                            &return_key_length,
+                                            &return_value_length, 
+                                            &flags, &rc)) != NULL)
+     {
+         if(rc == MEMCACHED_SUCCESS)
+            xbuf_xcat(reply, "Key %s returned %s<br>\n",
+                      return_key, return_value);
+     }
+  }
+
+   return HTTP_200_OK; // return an HTTP code
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================
+

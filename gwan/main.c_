@@ -1,0 +1,52 @@
+// ============================================================================
+// This is a Maintenance script for the G-WAN Web Server (http://trustleap.ch)
+// ----------------------------------------------------------------------------
+// main.c: do whatever you need to do here, like backups, alerts, etc.
+//
+//         If present, the maintenance script is started by G-WAN *after* the
+//         worker threads have been created. This allows you to use the G-WAN
+//         API call get_env() to interact with the server (like shown in this
+//         example, by periodically querying G-WAN performance counters).
+//
+//         The Maintenance script is running in its own thread so it can run
+//         an infinite loop, staying alive as long as G-WAN is running. This
+//         is not the case of the also optional init.c (Initialization) script
+//         which MUST return to let G-WAN start listening.
+//
+//         The return code of the Maintenance script is ignored by G-WAN. In
+//         contrast, the init.c script's value, if < 0, will stop G-WAN before
+//         it can start listening.
+// ============================================================================
+#include "gwan.h" // G-WAN API
+
+#include <stdio.h>  // puts()
+#include <unistd.h> // sleep()
+
+// ----------------------------------------------------------------------------
+// Here, we watch the server activity and could send an alert (pager, email)
+// if the server is reaching a given load, or no longer receiving data, etc.
+// ----------------------------------------------------------------------------
+int main(int argc, char *argv[])
+{
+   char str[128];
+   char *pdate = 0;
+   u64 requests = 0, old_requests = 0;
+   for(;;)
+   {
+      sleep(1);
+      pdate = (char*)get_env(argv, SERVER_DATE); // RFC timestamp
+      requests = (u64)get_env(argv, CC_REQUESTS); // processed requests so far
+      if(requests != old_requests)
+      {
+         old_requests = requests;
+         s_snprintf(str, sizeof(str) - 1, "%s: number of requests:%llu",
+                    pdate, requests);
+         puts(str);
+      }
+   }
+   return 0; // this return value is ignored by G-WAN
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================
+

@@ -1,0 +1,22 @@
+// ============================================================================
+// C servlet sample for the G-WAN Web Application Server (http://trustleap.ch/)
+// ----------------------------------------------------------------------------
+// hello.scala: G-WAN now talks Scala
+// 
+// Note: you can either use hello.java or hello.scala (so rename one) because
+//       they conflict due to the way Java classes are named.
+// ============================================================================
+import api.Gwan
+
+object hello
+{
+  def jmain(env: Long, args: Array[String]): Int =
+  {
+     Gwan.xbufCat(Gwan.getReply(env), "Hello, Scala!");
+     return 200;
+  }
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================
+

@@ -1,0 +1,73 @@
+// ============================================================================
+// C servlet sample for the G-WAN Web Application Server (http://trustleap.ch/)
+// ----------------------------------------------------------------------------
+// auth_oauth.c: authentication example using liboauth
+// ============================================================================
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#pragma link "curl"
+#pragma link "oauth"
+#pragma include "/usr/include/oauth"
+#include "oauth.h"
+
+#include "gwan.h"
+
+int main(int argc, char *argv[])
+{
+   char *request_consumer_key    = "9e2vubkru9xxka2cvw2mmru6",
+        *request_consumer_secret = "NMuDzRxnnh",
+        *request_token_uri       = "http://api.netflix.com/oauth/request_token",
+        *response_key            = NULL,
+        *response_secret         = NULL,
+        *request_url             = NULL,
+        *oauth_reply             = NULL;
+   
+   request_url = oauth_sign_url2(request_token_uri,
+                                 NULL,
+                                 OA_HMAC,
+                                 NULL,
+                                 request_consumer_key,
+                                 request_consumer_secret,
+                                 NULL,
+                                 NULL);
+   
+   oauth_reply = oauth_http_get(request_url, NULL);
+   if(!oauth_reply)
+   {
+      xbuf_cat(get_reply(argv),
+               "HTTP request for an oauth request-token failed.\n");
+   }
+   else
+   {
+      char **rv = NULL;   
+      int rc = oauth_split_url_parameters(oauth_reply, &rv);
+      qsort(rv, rc, sizeof(char *), oauth_cmpstringp);
+      xbuf_xcat(get_reply(argv),
+                "<br>Reply from Netflix:<br><pre>%s</pre>"
+                "<br>Request URL: %s"
+                "<br>RC: %d"
+                "<br>RV[0]: %s"
+                "<br>RV[1]: %s"
+                "<br>RV[2]: %s"
+                "<br>RV[3]: %s", 
+                oauth_reply,
+                request_url,
+                rc,
+                rv[0], rv[1], rv[2], rv[3]);
+   
+      if(rv) free(rv);   
+
+   }
+   
+   if(request_url) free(request_url);
+   if(oauth_reply) free(oauth_reply);
+   if(response_key) free(response_key);
+   if(response_secret) free(response_secret);
+   
+   return HTTP_200_OK;
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================

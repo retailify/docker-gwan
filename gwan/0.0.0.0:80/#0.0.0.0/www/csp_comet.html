@@ -1,0 +1,124 @@
+<!DOCTYPE HTML><html><head><title>'Comet' Live Stock</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link href="/imgs/style.css" rel="stylesheet" type="text/css">
+<script src="/imgs/comet.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+// remove leading and ending spaces
+String.prototype.trim = function(){return this.replace(/^\s+|\s+$/g,"");}
+
+// replace all remaining spaces by '+' characters
+//String.prototype.tran = function(){return this.replace(/\s/gi,"+");}
+// ----------------------------------------------------------------------------
+// read the server reply and update the form's table
+function req_read(reply)
+{
+   // "KEY:time VAL:%s|"
+   var e = document.getElementById('message');
+   var pos = reply.indexOf("|");
+   e.innerHTML = reply.slice(reply.indexOf(":") + 10, pos);
+   e.style.display = "block";
+   e.align = "center";
+
+   var text = reply.slice(pos + 1); // pass timestamp
+
+   // "KEY:01 VAL:1.10|KEY:02 VAL:2.20|KEY:03 VAL:3.30"
+   var pattern = /KEY:(\S+) VAL:([^|]+)/g;
+   pattern.compile(pattern);
+   var kv = null;
+   var row = 0, col = 0;
+   while(kv = pattern.exec(text))
+   {
+     row = kv[1].charAt(0) - '0';
+     col = kv[1].charAt(1) - '0';
+     e = document.getElementById('livestock').rows[row + 1].cells;
+     if(parseInt(kv[2]) > 500) 
+        e[col].style.background = (row % 2) ? '#d8ead8' : '#e8fae8'; else
+        e[col].style.background = (row % 2) ? '#ead8d8' : '#fae8e8';
+     e[col].style.textAlign = "center";
+     e[col].innerHTML = kv[2];
+   }
+}
+// ----------------------------------------------------------------------------
+// describe connection failure
+function req_error(request) 
+{
+  var e = document.getElementById('message');
+  e.innerHTML = "<br><pre><b><u>" + request.status + " " 
+              + request.statusText + "</u></b>" /*"<br>"
+              + request.getAllResponseHeaders() + "</pre>"*/;
+  e.style.display = "block";
+}
+// ----------------------------------------------------------------------------
+// post the form to the server
+function send_request(method)
+{
+  document.getElementById('button').disabled = true;
+
+  var delay = document.getElementById("Delay").value.trim();
+  var url = "/?comet.c&feed=livestock&delay="+escape(delay);
+  var res = ajaxGet(url, method, req_read, req_error);
+  if(res != 0)
+  {
+     if(delay < 1) delay = 1; else
+     if(delay > 60) delay = 60;
+     return;
+  }
+  e = document.getElementById('message');
+  e.innerHTML = "Not connected";
+  e.style.display = "block";
+}
+// ----------------------------------------------------------------------------
+// -->
+</script>
+</head>
+<body style="background-color:#fff; margin:0 16px;">
+<h2>'Comet' Live Stock <tt id=cur_time>(live streams pushed by G-WAN)</tt></h2><br>
+<form id="calculator">
+<fieldset style="width:600px;">
+<legend> Please select a refresh delay and press the <tt>[Start updates]</tt> button: </legend>
+<label for="Delay" style="width:100px">Refresh delay:</label>
+<input id="Delay" type="text" value="1" maxLength="2" style="text-align:right; width:30px">&nbsp; second(s)<br>
+<br>
+<input type="button" class="button" id="button" value="Start updates" onClick="send_request('GET')"><br>
+<br>
+<div id="message" style="display:block; text-align:center">
+   <p class="cred">Please enable Javascript to use this form.</p>
+</div>
+<table id="livestock" class=clean width=95%>
+<tr><th>Category A</th><th>Category B</th><th>Category C</th><th>Category D</th></tr>
+<tr class=d0><td>-</td><td>-</td><td>-</td><td>-</td></tr>  
+<tr class=d1><td>-</td><td>-</td><td>-</td><td>-</td></tr>  
+<tr class=d0><td>-</td><td>-</td><td>-</td><td>-</td></tr>  
+<tr class=d1><td>-</td><td>-</td><td>-</td><td>-</td></tr>  
+</table>
+<p> </p>
+<p>Pressing the <tt>[Start updates]</tt> button sends an initial client query 
+   to G-WAN, which then sends replies at the requested interval to the client
+   (until the connection is closed &ndash; either by the client or the server).
+</p>
+<p>In this example, a maximum of 16 values (the size of the table) are pushed
+   to the client (but you can pack any number of messages in one push update).
+</p>
+<p>Only the stock values that has changed on the server side are transmitted. 
+   All is event-based, so G-WAN worker threads do not block (making it possible 
+   to feed hundreds of thousands of such clients per second while other types of 
+   requests are satisfied).
+</p>
+<p>Memory usage is not specifically optimized for Comet connections (there's
+   ample room for this to take place &ndash; contact us if you need to scale
+   Comet connections that much).
+</p>
+</fieldset>
+</form>
+<br>
+<script type="text/javascript" language="JavaScript">
+<!--
+    // erase the "no JavaScript" warning (can only work if Javascript is enabled)
+    var e = document.getElementById("message");
+    e.innerHTML = '';
+    e.style.display = "none";
+// -->
+</script>
+</body></html>
+

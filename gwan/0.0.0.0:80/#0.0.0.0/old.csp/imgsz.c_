@@ -1,0 +1,172 @@
+// ============================================================================
+// C servlet sample for the G-WAN Web Application Server (http://trustleap.ch/)
+// ----------------------------------------------------------------------------
+// imgsz.c: load the image specifed as an URL parameter, resize it with the 
+//          ImageMagick library, apply a watermark bitmap if available and
+//          then serve the resized image to the client
+//
+// Usage: http://127.0.0.1:8080/?imgsz&file=imgs/OOW_new_demo.jpg
+//
+// You have first to download and install the ImageMagick library:
+// http://www.imagemagick.org/script/download.php
+//
+// Remarks: this is a working draft, ultimate speed would be attained by doing 
+//          the image processing manually instead of using ImageMagick. We 
+//          would use another resizing method, keep the watermark image loaded 
+//          instead of reloading it repeatedly, avoid the data copy, etc.
+// ============================================================================
+#pragma link "MagickWand"
+#pragma include "/usr/local/include/ImageMagick"
+
+#include "gwan.h" // G-WAN exported functions
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <wand/MagickWand.h>
+
+// ----------------------------------------------------------------------------
+// ImageMagick error message reporting
+// ----------------------------------------------------------------------------
+#define ThrowWandException(wand) \
+{ \
+  ExceptionType severity; \
+  char *description = MagickGetException(wand,&severity); \
+  xbuf_xcat(reply, "%s %s %lu %s\n", GetMagickModule(), description); \
+  description = (char*)MagickRelinquishMemory(description); \
+  return HTTP_200_OK; \
+}
+// ----------------------------------------------------------------------------
+int main(int argc, char *argv[])
+{ 
+   xbuf_t *reply = get_reply(argv); // get the server reply buffer
+
+   // -------------------------------------------------------------------------
+   // get the URI parameter
+   // -------------------------------------------------------------------------
+   char *file = ""; get_arg("file=", &file, argc, argv);
+   if(!file || !*file)
+   {
+      xbuf_cat(reply, "<p>usage: http://127.0.0.1:8080/"
+                      "?imgsz&file=imgs/OOW_new_demo.jpg</p>");
+      return HTTP_200_OK;
+   }
+   
+   // -------------------------------------------------------------------------
+   // build the local file name   
+   // -------------------------------------------------------------------------
+   char *wwwpath = (char*)get_env(argv, WWW_ROOT);
+   char src_file[512] = {0};
+   s_snprintf(src_file, sizeof(src_file), "%s/%s", wwwpath, file);
+   u32 i = 1;
+   for(; i < argc; i++) // just in case we have subdirectories
+   {
+       strcat(src_file, "/");
+       strcat(src_file, argv[i]);
+   }
+     
+   // -------------------------------------------------------------------------
+   // read the specified image
+   // -------------------------------------------------------------------------
+   MagickWandGenesis();
+   MagickWand *mw = NewMagickWand();  
+   if(MagickReadImage(mw, src_file) == MagickFalse)
+      ThrowWandException(mw);
+     
+   // -------------------------------------------------------------------------
+   // make sure we serve a JPEG (even if we just loaded a GIF, PNG, etc.)
+   // -------------------------------------------------------------------------
+   MagickSetImageFormat(mw, "JPEG"); // only relevant for photos
+     
+   // -------------------------------------------------------------------------
+   // resize the image
+   // -------------------------------------------------------------------------
+   const int dst_w = MagickGetImageWidth(mw) / 2,  // here we divide by two
+              dst_h = MagickGetImageHeight(mw) / 2;
+   MagickResizeImage(mw, 
+                     dst_w ? dst_w : 1, // avoid empty images...
+                     dst_h ? dst_h : 1, 
+                     LanczosFilter, 1.0); // >1:blur, <1:sharpen
+                     
+   // -------------------------------------------------------------------------
+   // apply a watermark
+   // -------------------------------------------------------------------------
+   static int watermark = 1; // check its existence only once
+   while(watermark)
+   {
+      char wat_file[512] = {0};
+      s_snprintf(wat_file, sizeof(src_file), "%s/imgs/watermark.png", wwwpath);
+      MagickWand *wat_mw = NewMagickWand();  
+      if(MagickReadImage(wat_mw, wat_file) == MagickFalse) // not found?
+      {
+         watermark = 0; // avoid load attempts in the future
+         break; //ThrowWandException(wat_mw);
+      }  
+      const int wat_w  = MagickGetImageWidth(wat_mw),
+                 wat_h  = MagickGetImageHeight(wat_mw);
+      int margin = dst_w / 20;
+      if(!margin) margin = 3;
+      if((dst_w > (wat_w + margin)) && (dst_h > (wat_h + margin))) // room?
+      {
+         if(MagickEvaluateImageChannel(wat_mw, AlphaChannel, 
+                                MultiplyEvaluateOperator, 0.5) == MagickFalse)
+            ThrowWandException(wat_mw);
+            
+         if(MagickCompositeImage(mw, wat_mw, OverCompositeOp, 
+                                 dst_w - (wat_w + margin), 
+                                 dst_h - (wat_h + margin)) == MagickFalse)
+            ThrowWandException(mw);
+      }
+      DestroyMagickWand(wat_mw);
+      break;
+   };
+       
+   // -------------------------------------------------------------------------
+   // remove image comments and profiles
+   // -------------------------------------------------------------------------
+   MagickStripImage(mw);
+   
+   // -------------------------------------------------------------------------
+   // define the quality level we want to use
+   // -------------------------------------------------------------------------
+   MagickSetImageCompressionQuality(mw, 60); // 100:lowest compression
+
+   // -------------------------------------------------------------------------
+   /* save the resized image in a new file on disk
+   // -------------------------------------------------------------------------
+   char dst_file[512] = {0};
+   s_snprintf(dst_file, sizeof(dst_file), "%s_sm.jpg", src_file);
+   if(MagickWriteImage(mw, dst_file) == MagickFalse)
+     ThrowWandException(mw); */
+     
+   // -------------------------------------------------------------------------
+   // specify a MIME type so we don't have to build custom HTTP headers
+   // -------------------------------------------------------------------------
+   char *mime = (char*)get_env(argv, REPLY_MIME_TYPE);
+   // note that we setup the FILE EXTENTION, not the MIME type:
+   mime[0] = '.'; mime[1] = 'j'; mime[2] = 'p'; mime[3] = 'g'; mime[4] = 0; 
+
+   // -------------------------------------------------------------------------
+   // copy the resized image into our server reply
+   // -------------------------------------------------------------------------
+   // we could avoid this data copy by using the G-WAN streaming feature and
+   // releasing the ImageMagick handle when all the file has been served but
+   // keeping many (verbose) ImageMagick contexts alive for a long time might
+   // be hazardous and this kind of optimization seems pointless with such a
+   // slow general-purpose library; let's make it easy for ImageMagick
+   size_t src_len = 0;
+   u8 *src = MagickGetImagesBlob(mw, &src_len);
+   xbuf_ncat(reply, (char*)src, src_len);
+   
+   // -------------------------------------------------------------------------
+   // cleanup the ImageMagick context
+   // -------------------------------------------------------------------------
+   mw = DestroyMagickWand(mw);
+   MagickWandTerminus();
+
+   return HTTP_200_OK; // return an HTTP code
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================
+

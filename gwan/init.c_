@@ -1,0 +1,153 @@
+// ============================================================================
+// This is an Initialization script for the G-WAN Web Server (http://gwan.ch)
+// ----------------------------------------------------------------------------
+// init.c: This script is run at startup before G-WAN starts listening so you
+//         have a chance to do initiatizations before any traffic can hit the
+//         server.
+//
+//         Do whatever initialization you need to do here, like loading and
+//         attaching data or an external database to the G-WAN US_SERVER_DATA
+//         persistent pointer.
+//
+//         The list of the get_env() values that can be used from init.c or
+//         main.c is: (get_env() calls with other values will be ignored)
+//
+//           US_SERVER_DATA   // global server pointer for user-defined data
+//           SERVER_SOFTWARE  // "Server: G-WAN" HTTP response header
+//           SCRIPT_TMO       // time-out in ms running a script
+//           KALIVE_TMO       // time-out in ms for HTTP keep-alives
+//           REQUEST_TMO      // time-out in ms waiting for request
+//           MIN_SEND_SPEED   // send rate in bytes/sec (if < close)
+//           MIN_READ_SPEED   // read rate in bytes/sec (if < close)
+//           MAX_ENTITY_SIZE  // maximum POST entity size
+//           USE_WWW_CACHE    // enable static  cache (default: off)
+//           USE_CSP_CACHE    // enable servlet cache (default: off)
+//           CACHE_ALL_WWW    // load all /www in cache (default: off)
+//           USE_MINIFYING    // enable JS/CSS/HTML minifying (default: off)
+//
+//         Note that, unlike the optional Maintenance script (started later 
+//         and run in its own thread so it can either stop or loop forever), 
+//         this init.c script MUST return to let G-WAN start listening.
+//
+//         To avoid running the optional init.c script, rename it to anything 
+//         else than 'init.c' ('init.c_' used by default, is fine).
+// ============================================================================
+#include "gwan.h"  // G-WAN API
+#include <stdio.h> // puts()
+
+int main(int argc, char *argv[])
+{
+   puts("\n\n  G-WAN has run the Intitialization script 'init.c' stored in\n" 
+        "  the gwan executable directory. Unlike the Maintenance script\n"
+        "  ('main.c'), the 'init.c' script must return to let G-WAN run.\n");
+   
+   // -------------------------------------------------------------------------
+   // US_SERVER_DATA is a global pointer initialized to NULL so you can
+   // setup it before the G-WAN server has launched worker threads, and 
+   // before it is listening
+   //
+   // typedef struct // an example of user-defined data structure:
+   // { 
+   //    kv_t *kv;   // a Key-Value store
+   //    char *blah; // a string
+   //    int   val;  // a counter
+   // } data_t;
+   // data_t **data = (data_t**)get_env(argv, US_SERVER_DATA);
+   //
+   // attach your user-defined structure
+   // if(data)
+   // {
+   //    data[0] = (data_t*)calloc(1, sizeof(data_t));
+   //    load any data/code you want to use later from handlers/servlets
+   //    ...
+   // }
+   
+   // -------------------------------------------------------------------------
+   // USE_MINIFYING HTML/CSS/JS minifying on/off (default off):
+   /*
+   u8 *minify = (u8*)get_env(argv, USE_MINIFYING);
+   if(minify)
+   {
+      *minify = 1;
+      printf("> HTML/CSS/JS minifying: %c\n", (u8)("ny"[*minify != 0]));
+   }*/
+   
+   // -------------------------------------------------------------------------
+   // MAX_ENTITY_SIZE: maximum POST entity size (default 4069):
+   //
+   // u32 *entity_size = (u32*)get_env(argv, MAX_ENTITY_SIZE);
+   // *entity_size = 2 * 1024 * 1024; // 2 MiB
+   
+   // -------------------------------------------------------------------------
+   // USE_WWW_CACHE: static files cache on/off (default off):
+   //
+   u8 *www_cache = (u8*)get_env(argv, USE_WWW_CACHE);
+   if(www_cache)
+   {
+      *www_cache = 1;
+      printf("> /www cache: %c\n", (u8)("ny"[*www_cache != 0]));
+   }
+   
+   // -------------------------------------------------------------------------
+   // USE_CSP_CACHE: slow servlets cache on/off (default off):
+   //
+   u8 *csp_cache = (u8*)get_env(argv, USE_CSP_CACHE);
+   if(csp_cache)
+   {
+      *csp_cache = 1;
+      printf("> /csp cache: %c\n", (u8)("ny"[*csp_cache != 0]));
+   }
+   
+   // -------------------------------------------------------------------------
+   // QUERY_CHAR (default: '?') can be chosen from the following set:
+   //  - _ . ! ~ * ' ( ) 
+   // (see RFC 2396, section "2.3. Unreserved Characters")
+   /*  
+   u8 *query_char = (u8*)get_env(argv, QUERY_CHAR);
+   if(query_char) 
+   {
+      u8 old = *query_char;
+      *query_char = '!'; // "/!hello.c" instead of "/?hello.c"
+      printf("> changed query_char from '%c' to '%c' (%p)\n", 
+             old, *query_char, query_char);
+   }*/
+
+   // -------------------------------------------------------------------------
+   // DEFAULT_LANG the language that can be queried without a file extension:
+   //              "/?hello" instead of "/?hello.c"
+   // (default: LG_C for ANSI C)
+   // LG_C, LG_CPP, LG_JAVA, etc. are defined in /gwan/include/gwan.h
+   // and in http://gwan.com/api#env
+   /*
+   u8 *lang = (u8*)get_env(argv, DEFAULT_LANG);
+   if(lang)
+   {
+       *lang = LG_CPP; // use "/?hello" instead of "/?hello.cpp"
+       puts("> changed default_language from C to C++");
+   }*/
+   
+   // -------------------------------------------------------------------------
+   // SERVER_SOFTWARE lets you enable/disable the "Server: G-WAN" HTTP header
+   //
+   // The G-WAN license (see the LICENSE.txt file in the download archive) lets
+   // you disable (but not modify) the server name in HTTP response headers.
+   //
+   // While no vulnerability was found in G-WAN since its first release in 2009
+   // and since Web servers can be identified by other means than HTTP headers
+   // (latency, features, HTTP status code text and choice for various cases, 
+   // the order of headers, etc.) G-WAN lets its users conceal its server name
+   // if they feel that this can help them to stay secure.
+   /*
+   u8 *gwan = (u8*)get_env(argv, SERVER_SOFTWARE);
+   if(gwan)
+   {
+       *gwan = 0; // disable Server Identification (default: enabled)
+       puts("> disabled Server Identification");
+   }*/
+
+   return 0; // 0:OK, if( < 0) then G-WAN will stop with exit(-1).
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================
+

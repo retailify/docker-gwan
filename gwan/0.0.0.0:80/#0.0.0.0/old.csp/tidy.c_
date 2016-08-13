@@ -1,0 +1,146 @@
+// ============================================================================
+// C servlet sample for the G-WAN Web Application Server (http://trustleap.ch/)
+// ----------------------------------------------------------------------------
+// tidy.c: use the 'libtidy' C library to help clean-up/validate HTML pages
+//         just like the mod_tidy Apache module.
+//
+//         Installation of the libtidy library (Debian):
+//            sudo apt-get install -y libtidy-dev libtidy-0.99-0
+// ----------------------------------------------------------------------------
+// Usage: http://127.0.0.1:8080/?tidy&file=index.html
+//
+// Output:
+//    Tidying '/gwan/0.0.0.0_8080/#0.0.0.0/www/index.html'
+//    Diagnostics:
+//    line  42 column  3 - Warning: missing </a> before <div>
+//    line  46 column  3 - Warning: discarding unexpected </a>
+//    line  82 column 66 - Warning: unescaped & or unknown entity "&sort_by"
+//    line   7 column  1 - Warning: <meta> proprietary attribute "charset"
+//    line   7 column  1 - Warning: <meta> lacks "content" attribute
+//    line   8 column  1 - Warning: <link> inserting "type" attribute
+//    line  30 column  6 - Warning: <img> lacks "alt" attribute
+//    line  47 column  3 - Warning: <img> lacks "alt" attribute
+//    line 163 column  1 - Warning: <img> lacks "alt" attribute
+//    line  65 column  3 - Warning: trimming empty <b>
+//    Info: Document content looks like HTML Proprietary
+//    10 warnings, 0 errors were found!
+// ============================================================================
+#include "gwan.h" // G-WAN definitions
+
+#pragma link    "tidy"
+#pragma include "/usr/include/tidy/"
+
+#include <tidy.h>
+#include <buffio.h>
+
+int main(int argc, char **argv )
+{
+   xbuf_t *reply = get_reply(argv);
+
+   // -------------------------------------------------------------------------
+   // get the URI parameter
+   // -------------------------------------------------------------------------
+   char *file = ""; get_arg("file=", &file, argc, argv);
+   if(!file || !*file)
+   {
+      xbuf_cat(reply, "<p>usage: http://127.0.0.1:8080/?tidy&file=index.html</p>");
+      return HTTP_200_OK;
+   }
+   
+   // -------------------------------------------------------------------------
+   // build the local file name   
+   // -------------------------------------------------------------------------
+   char *wwwpath = (char*)get_env(argv, WWW_ROOT);
+   char filename[512] = {0};
+   snprintf(filename, sizeof(filename), "%s/%s", wwwpath, file);
+   u32 i = 1;
+   for(; i < argc; i++) // just in case we have subdirectories
+   {
+       strcat(filename, "/");
+       strcat(filename, argv[i]);
+   }
+   
+   // -------------------------------------------------------------------------
+   // try to load the file
+   // -------------------------------------------------------------------------
+   //printf("loading '%s' file...\n", filename);
+   xbuf_t f; xbuf_init(&f);
+   xbuf_frfile(&f, filename);
+   xbuf_xcat  (reply, "<p>%s file <tt>%s</tt></p>", 
+               f.len ? "Tidying" : "Can't find",
+               filename);
+   //printf("loaded %d bytes\n", f.len);
+   if(!f.len) return HTTP_200_OK;
+
+   // -------------------------------------------------------------------------
+   // now we have loaded the file, process it with libtidy
+   // -------------------------------------------------------------------------
+   //puts("running libtidy...");
+   TidyBuffer output = {0};
+   TidyBuffer errbuf = {0};
+   TidyDoc    tdoc   = tidyCreate(); // initialize "document"
+   
+   int ret = tidyOptSetBool(tdoc, TidyXhtmlOut, no);     // convert to XHTML
+   if(ret != 0) ret = tidySetErrorBuffer(tdoc, &errbuf); // capture diagnostics
+   if(ret >= 0) ret = tidyParseString(tdoc, f.ptr);      // parse the file
+   if(ret >= 0) ret = tidyCleanAndRepair(tdoc);          // tidy it up!
+   if(ret >= 0) ret = tidyRunDiagnostics(tdoc);
+   if(ret >  1) ret = tidyOptSetBool(tdoc, TidyForceOutput, yes) ? ret : -1;
+   if(ret >= 0) ret = tidySaveBuffer(tdoc, &output);
+   if(ret >= 0)
+   {
+      if(ret > 0)
+         xbuf_xcat(reply, "<hr><p>Diagnostics:</p><pre>\n%H</pre><hr>", errbuf.bp);
+      
+      // save the 'enhanced' HTML to a new file for easier comparison
+      snprintf(filename, sizeof(filename), "%s/___%s", wwwpath, file);
+      f.len = 0;
+      xbuf_cat(&f, (char*)output.bp);
+      xbuf_tofile(&f, filename);
+   }
+   else
+      xbuf_xcat(reply, "<p>A severe error (%d) occurred.</p><br>", ret);
+
+   // -------------------------------------------------------------------------
+   // reformat the tidy reply
+   // -------------------------------------------------------------------------
+   //puts("reformating...");
+   char *p = reply->ptr, 
+        *e = reply->ptr + reply->len;
+      while(p && *p && p < e)
+         p = xbuf_replfrto(reply, p, e, "&lt;br&gt;line", "\n\nline");
+   
+   p = strstr(reply->ptr, "&lt;br&gt;Info:");
+   if(p)
+   {
+      xbuf_replfrto(reply, p, e, "&lt;br&gt;Info:", "&lt;br&gt;\n\nInfo:");
+   
+      while(p && *p && p < e)
+         p = xbuf_replfrto(reply, p, e, "&lt;br&gt;", "\n");
+   }
+   p = reply->ptr;
+   while(p && *p && p < e)
+      p = xbuf_replfrto(reply, p, e, " - ", "\n- ");
+      
+   // -------------------------------------------------------------------------
+   // footer: add link to new file
+   // -------------------------------------------------------------------------
+   if(ret >= 0)
+   {
+      xbuf_xcat(reply, "<p>Click <a href=\"%s\"  target=\"_blank\"> here</a>"
+      " to see the 'enhanced' <tt>%s</tt> file.</p>", file, file);
+   }
+   
+   // -------------------------------------------------------------------------
+   // free Tidy context
+   // -------------------------------------------------------------------------
+   tidyBufFree(&output);
+   tidyBufFree(&errbuf);
+   tidyRelease(tdoc);
+   
+   return HTTP_200_OK; // return an HTTP code
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================
+

@@ -1,0 +1,40 @@
+<!DOCTYPE>
+<head>
+	<title>entity.html</title>
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+   <link href="imgs/style.css" rel="stylesheet" type="text/css">
+	<style type="text/css">
+	label {width:100%; text-align:left}
+	input {text-align:left}
+	</style>
+</head>
+<body style="padding:16px">
+  <h2>Testing URI parameters, POST / PUT / DELETE and HTTP Entities</h2>
+  <p>This form sends a <tt class="note bblue">"POST /?entity/arg1=one/arg2=two"</tt> request.
+     G-WAN will reply with the request details, including the HTTP entity,
+     see the <tt>entity.c</tt> servlet (for more request examples).
+  </p>
+  <p>Note that G-WAN <tt>servlets' main(argc, argv)</tt> report both the URI 
+     parameters and the entity (if any). This is especially useful in RESTful
+     requests that can use <tt>both</tt> URI parameters and a POST/PUT entity.
+  </p>
+  <p>To enlarge the HTTP entity size accepted by G-WAN (default is 4KiB) see
+     the <tt>entity_size.c</tt> servlet example. POST entities larger than the
+     limit trigger a 413:"Entity too large" HTTP reply.
+  </p>
+  <form action="/?entity&arg1=one&arg2=two" method="post" enctype="multipart/form-data" target="my_Result">
+    <fieldset class=blgrey>
+      <p>
+        <label for="file-entity">File Entity: <input type="file" name="file-entity" value="" style="width:300px"/></label>
+      </p>
+      <hr>
+      <input type="submit" name="submit" value="Send HTTP Request" /> 
+    </fieldset>
+  </form>
+  <p>Server <tt>entity.c's</tt> Reply:
+  </p>
+  <iframe name="my_Result" class=note style="display:block; border:solid 1px #ccc; width:93%; height:50%">
+  </iframe>
+</body>
+</html>
+

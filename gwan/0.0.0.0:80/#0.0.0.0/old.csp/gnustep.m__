@@ -1,0 +1,74 @@
+// ============================================================================
+// Objective-C servlet example for the G-WAN Web App. Server  (http://gwan.ch/)
+// ----------------------------------------------------------------------------
+// gnustep.m: G-WAN using Objective-C with GnuStep
+//
+// This code was submitted and written by Thomas Meitz (gwan at jproxx dot com)
+// ----------------------------------------------------------------------------
+// You have to install following packages on Debian to run this example:
+//    apt-get install gobjc gnustep gnustep-make gnustep-common gnustep-devel
+//
+// Then you have to create the following links (with sudo or as root)
+//    ln -s /usr/include/GNUstep/Foundation /usr/include/Foundation
+//    ln -s /usr/include/GNUstep/GNUstepBase /usr/include/GNUstepBase
+//    ln -s /usr/include/GNUstep/ObjectiveC2 /usr/include/ObjectiveC2
+// ----------------------------------------------------------------------------
+// imported functions:
+//   get_reply(): get a pointer on the 'reply' dynamic buffer from the server
+//    xbuf_cat(): like strcat(), but it works in the specified dynamic buffer
+// ----------------------------------------------------------------------------
+#import "gwan.h" // G-WAN exported functions
+#import <Foundation/NSObject.h>
+#import <Foundation/NSAutoreleasePool.h>
+#import <Foundation/NSString.h>
+
+#pragma link "gnustep-base"
+
+@interface Objc2Test : NSObject {
+   NSString* name;
+   xbuf_t *replyBuffer;
+}
+- (Objc2Test *) initWithBuffer:(xbuf_t *) reply;
+- (NSString*) name;
+- (void) setName : (NSString*)newName;
+- (void) show:(NSString *) property with:(NSString *) value;
+@end
+
+@implementation Objc2Test 
+- (Objc2Test *) initWithBuffer:(xbuf_t *) reply
+{
+   replyBuffer = reply;
+   return self;
+}
+- (NSString*) name 
+{
+   return name;
+}
+
+- (void) setName: (NSString*)newName 
+{
+   [name release];
+   name = [newName retain];
+}
+
+- (void) show:(NSString *) property with:(NSString *) value
+{
+   xbuf_cat(replyBuffer, (char*)[property UTF8String]);
+   xbuf_cat(replyBuffer, (char*)" ");
+   xbuf_cat(replyBuffer, (char*)[value UTF8String]);
+}
+@end
+// ----------------------------------------------------------------------------
+int main(int argc, char *argv[])
+{
+   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+   Objc2Test *test = [[[Objc2Test alloc] initWithBuffer:get_reply(argv)] autorelease];
+   [test setName: [NSString stringWithCString:"Thomas"]];
+   [test show:[NSString stringWithCString:"My name is"] with:[test name]];
+   [pool drain];
+   return 200; // return an HTTP code (200:'OK')
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================
+

@@ -1,0 +1,32 @@
+<?php 
+// ============================================================================
+// PH7 servlet example for the G-WAN Web Application Server (http://gwan.ch/)
+// ----------------------------------------------------------------------------
+// hello.PH7: G-WAN supports PH7 scripts
+//
+// G-WAN supports PHP's $_GET, $POST_ and $_COOKIE['PHPSESSID'] variables.
+// ============================================================================
+   echo 'Hello, PHP!<br><br>';
+
+	// list QUERY PARAMETERS, if any:
+	//
+	// GET http://10.10.200.80/?hello.php&arg1=123&arg2=456
+	//
+	// argc = 2
+	// args[0] arg1=123
+	// args[1] arg2=456
+	//
+	echo 'Got '. $argc .' URI Parameters:<br><pre>';
+   foreach($argv as $k => $v) {
+      echo 'arg['. $k .']: '. $v .'<br>';
+   }   
+	echo '</pre>';
+   
+   exit(200); // return an HTTP code (200:'OK')
+
+// ============================================================================
+// End of Source Code
+// ============================================================================
+?>
+
+

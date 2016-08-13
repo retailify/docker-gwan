@@ -1,0 +1,77 @@
+// ============================================================================
+// C servlet sample for the G-WAN Web Application Server (http://trustleap.ch/)
+// ----------------------------------------------------------------------------
+// curl.c: get an URL, just like G-WAN's xbuf_frurl()
+//
+//         (curl does much more than this, supporting DICT, FILE, FTP, FTPS, 
+//          GOPHER, HTTP, HTTPS, IMAP, IMAPS, LDAP, LDAPS, POP3, POP3S, RTMP,
+//          RTSP, SCP, SFTP, SMTP, SMTPS, TELNET, TFTP, HTTP POST, HTTP PUT, 
+//          FTP uploading, etc.)
+//
+// Notes: for this example to work, you obviously need libcurl but you will
+//        also need libcurl4-gnutls-dev or libcurl4-openssl-dev for the headers
+//
+//        If you get a warning like "_curl_easy_setopt_err_write_callback 
+//        declared with attribute warning" then it comes from the source 
+//        code of libcurl, which did not finalize its 64-bit port.
+// ----------------------------------------------------------------------------
+// the full path is needed because this library pre-installed on Linux is not
+// properly configured (it is not declared as a library, and there is no 
+// default link to libcurl.so)
+//
+#pragma link "curl"
+
+#include "gwan.h"
+#include <curl/curl.h>
+// ----------------------------------------------------------------------------
+size_t writer(char *data, size_t size, size_t nmemb, xbuf_t *xbuf)
+{
+   if(!xbuf)
+      return 0;
+      
+   int len = size * nmemb;
+   if(len > 0)
+      xbuf_ncat(xbuf, data, len);
+   
+   return len;
+}
+// ----------------------------------------------------------------------------
+CURLcode http_get(char *url, xbuf_t *xbuf)
+{
+   CURL *curl = curl_easy_init();
+   if(!curl)
+      return 0;
+
+   curl_easy_setopt(curl, CURLOPT_URL, url);
+   curl_easy_setopt(curl, CURLOPT_HEADER, 1);
+   curl_easy_setopt(curl, CURLOPT_HTTP_TRANSFER_DECODING, 0);
+   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+   curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 50L);
+   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+   curl_easy_setopt(curl, CURLOPT_USERAGENT, "G-WAN");
+   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writer);
+   curl_easy_setopt(curl, CURLOPT_WRITEDATA, xbuf);
+   CURLcode result = curl_easy_perform(curl);
+   curl_easy_cleanup(curl);
+   return result;
+}
+// ----------------------------------------------------------------------------
+int main(int argc, char *argv[])
+{
+   char *url = "curl.haxx.se/libcurl/c/";
+   xbuf_t *reply = get_reply(argv), xbuf;
+
+   xbuf_init(&xbuf);
+   
+   if(http_get(url, &xbuf) != CURLE_OK)
+      xbuf_cat(reply, "Server or resource not available");
+   else
+      xbuf_ncat(reply, xbuf.ptr, xbuf.len);
+      
+   xbuf_free(&xbuf);   
+   return HTTP_200_OK;
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================
+

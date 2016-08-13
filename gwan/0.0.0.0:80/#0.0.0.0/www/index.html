@@ -1,0 +1,143 @@
+<!DOCTYPE HTML>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>G-WAN &gt; Web Application Server &gt; Download</title>
+
+<meta name="description" content="Download G-WAN now to start building extraordinary applications!">
+
+<link href="imgs/style.css"  type="text/css" rel="stylesheet">
+</head><body><div id="wrap"><div id="main">
+
+<div id="header" class="page"><div class="tabmenu">
+<a href="http://gwan.ch/" class="title">G-WAN web server</a>
+<ul>
+  <li><a href="http://gwan.ch/about">About</a></li>
+  <li><a href="http://gwan.ch/buy">Buy Now</a></li>
+  <li><a href="http://gwan.ch/api">API</a></li>
+  <li><a href="http://gwan.ch/faq">FAQ</a></li>
+  <li><a href="http://gwan.ch/developers">Developers</a></li>
+  <li><a class="green current" href="http://gwan.ch/download">Download</a></li>
+  <li><a href="http://gwan.ch/blog" target="_blank">Blog</a></li>
+</ul>
+</div></div>
+<a class="vright rotl" style="right:-29px;" href="http://gwan.ch/about/index.html#contact">Feedback</a>
+
+<div class="txt margin layout onecol">
+<h1>Download</h1>
+<p><span class="quote txt cgrey">Software is getting slower more rapidly than hardware becomes faster.</span>
+<span class="quote author cgrey"> Wirth's Law</span>
+</p>
+</div>
+
+<div class="txt margin layout"><div class="lgcol left"><div class="page">
+  <h2>Installation</h2>
+
+  <p>To download, install (and <i>optimally configure</i>) G-WAN:</p>
+  <pre class="shell" style="width:85%"> wget http://gwan.com/archives/gwan_linux64-bit.tar.bz2
+ tar -xjf gwan_linux64-bit.tar.bz2
+ cd gwan_linux64-bit
+ <samp>sudo</samp> ./gwan                       (./gwan -h for help)</pre>
+
+  <p>Then, type <tt>http://localhost:8080/</tt> in your Web browser to play with
+  the <tt>/gwan/.../csp</tt> samples, such as:</p>
+
+  <ul>
+  <li>AJAX forms (<a href="/?contact.c" target="_blank">contact</a>, <a href="/?loan.c" target="_blank">loan</a>, etc.)</li>
+  <li>COMET (see the stock quotes <a href="/?comet.c" target="_blank">streaming</a> example)</li>
+  <li>Realtime Bandwidth Shaping (see the <a href="/?throttle.c" target="_blank">throttle.c</a> example)</li>
+  <li><a href="/?cache.c" target="_blank">Caching</a> (using G-WAN's wait-free integrated cache)</li>
+  <li>G-WAN wait-free Key-Value store, <a href="/?sqlite.c" target="_blank">SQLite</a>, Tokyo Cabinet (<a href="/?kv_bench.c" target="_blank">all benchmarked</a>)</li>
+  <li><a href="nop.gif" target="_blank">Web beacon</a> (1x1 transparent pixel served at the speed of light say users)</li>
+  <li><a href="/?json.c" target="_blank">JSON</a> (serialization and de-serialization, <a href="/?json_bench.c" target="_blank">benchmarked</a>)</li>
+  <li><a href="/?captcha.c" target="_blank">Chaptchas</a> (easy for humans, hard for machines)</li>
+  <li><a href="/?charts.c" target="_blank">Charts</a> (area, bar, dot, line, pie, ring - using various styles)</li>
+  <li><a href="/source/cairo.c" target="_blank">24-bit anti-aliased images</a> (frame buffers, PNG, PS, PDF, SVG, OpenGL)</li>
+  <li>GIF fractals (ultra-fast <a href="/?fractal.c" target="_blank">in-memory GIF I/O</a>)</li>
+  <li><a href="/?request.c" target="_blank">Currency</a> conversions (using the European Central Bank rates)</li>
+  <li><a href="/?data_uri.c" target="_blank">Data URIs</a> (inlining images in HTML replies)</li>
+  <li>HTTP headers (<a href="/?setheaders.c" target="_blank">custom</a>, without, automatically generated)</li>
+  <li><a href="/source/tidy.c" target="_blank">HTML validation/clean-up</a> (using the Tidy library)</li>
+  <li><a href="/?redirect.c" target="_blank">Redirection</a> (conditional or static)</li>
+  <li><a href="/?crash.c" target="_blank">Crash reports</a> (caught in libc, C scripts and G-WAN calls)</li>
+  <li><a href="/?report.c" target="_blank">Server report</a> (formatted in ASCII or HTML)</li>
+  </ul>
+
+  <p>The manual documents server usage, basic and advanced functions and 
+  features like G-WAN <tt>handlers</tt> (which require <a href="http://gwan.ch/developers/index.html#handler">
+  10 to 20x less code</a> than Apache, Lighttpd or Nginx modules).</p>
+
+  <p class="note bgreen">
+   Upgrade: (a) overwrite your <tt>./include</tt>, <tt>./libraries</tt> files and
+   the <tt>gwan</tt> executable with the new files and then (b) run G-WAN once
+   without <tt>-d</tt> (daemon mode) to make sure that the <tt>maintenance</tt>,
+   <tt>servlet</tt> and <tt>handler</tt> scripts compile.
+  </p>
+<br />
+
+  <h2>Timeline</h2>
+
+  <p>The G-WAN development log is available <a href="http://gwan.ch/en_timeline.html">here</a>.
+  You can also reach the relevant entry by clicking on a release date
+  tag (top-right corner of this page).</p>
+
+  <h2>Questions &amp; Answers</h2>
+
+  <p>The <a href="http://gwan.ch/api">API</a> and <a href="http://gwan.ch/faq">Frequently Asked Questions</a> 
+  are worth considering first.</p>
+
+  <p><a alt="nofollow" href="http://stackoverflow.com/questions/tagged/g-wan" target="_blank">Stackoverflow</a>
+  lists many more examples and will let you search for replies to common questions.</p>
+
+  <p>G-WAN works best on Linux distributions like Debian or CentOS, both of 
+  which offer 'Desktop' and 'Server' flavors.</p>
+
+</div></div>
+
+<div class="smcol right"><div class="page">
+  <h2>&rsaquo; Linux</h2>
+  <a href="http://gwan.ch/en_timeline.html" title="Timeline"></a>
+  <p>G-WAN <small>(with 50+ script examples)</small><br />
+     <a class="small" href="http://gwan.ch/archives/gwan_linux64-bit.tar.bz2">G-WAN <b>64</b>-bit &nbsp; <small>(~700 KB)</small></a>
+  </p>
+  <p>User's Manual<br />
+     <a class="small" href="http://gwan.ch/archives/gwan_linux.pdf">For humans &nbsp; <small>(38-page PDF)</small></a>
+  </p>
+  <p>White-Papers<br />
+     <a class="small" href="http://gwan.ch/archives/g-wan_why.pdf">Why G-WAN? &nbsp; <small>(10-page PDF)</small></a><br />
+     <a class="small" href="http://gwan.ch/archives/g-wan_case.pdf">Business Case &nbsp;<small>(3-page PDF)</small></a><br />
+     <a class="small" href="http://gwan.ch/archives/g-wan_prez.pdf">Slide-Show &nbsp;&nbsp; &nbsp; &nbsp; <small>(7-page PDF)</small></a>
+  </p>
+  <br />
+
+  <h2>&rsaquo; Windows</h2>
+  <a href="http://gwan.ch/en_timeline.html#2009-09-09" title="Timeline">
+     <div class="hnote">
+        <div class="month">Sep</div><div class="day">11</div><div class="year">2009</div>
+     </div>
+  </a>
+  <p class="cgrey smaller">G-WAN v1.0.4 &ndash; discontinued
+  </p>
+   <p class="note bgrey small">Windows support was discontinued after Linux 
+   proved to be <a href="http://gwan.ch/en_loans.html">much faster</a>.
+   </p>
+   <br />
+
+  <h2>&rsaquo; Promotional Artwork</h2>
+  <p class="small">80x15 button &nbsp; &nbsp; <img src="imgs/gwan_rulez.gif" /><br />
+     54x15 button &nbsp; &nbsp; <img src="imgs/gwan_pw.gif" /><br />
+     16x16 button &nbsp; &nbsp; <img src="imgs/gwan16.gif" />
+   </p>
+   <p class="note bblue small">These icons will embelish backlinks on your 
+      G-WAN-based Web sites.
+   </p>
+</div></div>
+
+</div>
+
+</div></div><div id="footer">
+<p class="left">Powered by &nbsp;<b>G-WAN</b></p> 
+<p class="right">Copyright &copy; 2007 - 2015 TrustLeap. All Rights Reserved. 
+ &nbsp; &nbsp; &nbsp; <a href="http://gwan.ch/legal">Legal information</a></p> 
+</div>
+
+</body></html>

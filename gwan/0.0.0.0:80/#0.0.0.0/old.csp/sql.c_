@@ -1,0 +1,40 @@
+// ============================================================================
+// C servlet sample for the G-WAN Web Application Server (http://trustleap.ch/)
+// ----------------------------------------------------------------------------
+// sqlite.c: using the SQLite library from a G-WAN C script
+// ============================================================================
+// imported functions:
+//   get_reply(): get a pointer on the 'reply' dynamic buffer from the server
+//   xbuf_xcat(): like sprintf(), but appends to the specified dynamic buffer 
+//    xbuf_cat(): like strcat(), but it works in the specified dynamic buffer 
+//     log_err(): lets you dumpt text in the current virtual host's error.log
+// ----------------------------------------------------------------------------
+#pragma link "sqlite3"
+#pragma include "./libraries/sqlite3"
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "sqlite3.h"
+#include "gwan.h"
+// ----------------------------------------------------------------------------
+int main(int argc, char *argv[])
+{
+   xbuf_t *reply = get_reply(argv);
+
+   sqlite3 *db;
+   int res = sqlite3_open("crash.db", &db);
+   if(res || !db)
+   {
+      sqlite3_close(db);
+      xbuf_cat(reply, "couldn't open db");
+      return HTTP_500_INTERNAL_SERVER_ERROR;
+   } 
+
+   sqlite3_close(db);
+   xbuf_cat(reply, "Disk-based SQLite DB opened (and closed) successfully.");
+   return HTTP_200_OK;
+}
+// ============================================================================
+// End of Source Code
+// ============================================================================
