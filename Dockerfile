@@ -8,4 +8,5 @@ RUN ln -s "/opt/gwan/0.0.0.0:80/#0.0.0.0/www" /opt/www
 RUN ln -s "/opt/gwan/0.0.0.0:80/#0.0.0.0/csp" /opt/csp
 RUN chown -h www-data:www-data /opt/www \
     && chown -h www-data:www-data /opt/csp
+EXPOSE 80
 CMD [ "/opt/gwan/gwan" ]
